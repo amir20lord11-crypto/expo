@@ -10,6 +10,7 @@ import io.github.expo.modules.v2.react.androidContextOrNull
 private const val INTERRUPTION = "interruption"
 private const val ROUTE_CHANGE = "routeChange"
 private const val ACTIVATION_ERROR = "activationError"
+private const val NOW_PLAYING_OWNER_CHANGE = "nowPlayingOwnerChange"
 
 @Record
 internal data class InterruptionEvent(
@@ -23,6 +24,9 @@ internal data class RouteChangeEvent(val reason: String)
 
 @Record
 internal data class ActivationErrorEvent(val message: String?, val client: String)
+
+@Record
+internal data class NowPlayingOwnerChangeEvent(val id: String?)
 
 @ExpoModule("ExpoMediaSession")
 class MediaSessionModule : Module() {
@@ -48,6 +52,12 @@ class MediaSessionModule : Module() {
     onStopObserving = { stopObserving(ACTIVATION_ERROR) }
   )
 
+  @Event(name = NOW_PLAYING_OWNER_CHANGE)
+  private val onNowPlayingOwnerChange = event<NowPlayingOwnerChangeEvent>(
+    onStartObserving = { startObserving(NOW_PLAYING_OWNER_CHANGE) },
+    onStopObserving = { stopObserving(NOW_PLAYING_OWNER_CHANGE) }
+  )
+
   private val forwarder = object : MediaSessionObserver {
     override fun mediaSessionInterruptionBegan(reason: InterruptionReason) {
       onInterruption(InterruptionEvent(type = "began", reason = reason.raw))
@@ -63,6 +73,10 @@ class MediaSessionModule : Module() {
 
     override fun mediaSessionDidFail(error: CodedException, client: String) {
       onActivationError(ActivationErrorEvent(error.message, client))
+    }
+
+    override fun mediaSessionNowPlayingOwnerChanged(id: String?) {
+      onNowPlayingOwnerChange(NowPlayingOwnerChangeEvent(id))
     }
   }
 
