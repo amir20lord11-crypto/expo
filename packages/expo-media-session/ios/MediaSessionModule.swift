@@ -19,6 +19,11 @@ struct ActivationErrorEvent {
   var client: String
 }
 
+@Record
+struct NowPlayingOwnerChangeEvent {
+  var id: String?
+}
+
 @ExpoModule("ExpoMediaSession")
 public final class MediaSessionModule: Module {
   private let forwarder = EventForwarder()
@@ -32,6 +37,9 @@ public final class MediaSessionModule: Module {
 
   @Event
   var onActivationError: (ActivationErrorEvent) -> Void
+
+  @Event
+  var onNowPlayingOwnerChange: (NowPlayingOwnerChangeEvent) -> Void
 
   public override func didCreate() {
     forwarder.module = self
@@ -90,5 +98,9 @@ private final class EventForwarder: MediaSessionObserver {
   func mediaSession(didFail error: Error, client: String) {
     let message = (error as? Exception)?.description ?? error.localizedDescription
     module?.onActivationError(ActivationErrorEvent(message: message, client: client))
+  }
+
+  func mediaSessionNowPlayingOwnerChanged(id: String?) {
+    module?.onNowPlayingOwnerChange(NowPlayingOwnerChangeEvent(id: id))
   }
 }
